@@ -614,7 +614,7 @@ namespace KopiLua
 
 		private static void SetPath (LuaState L, CharPtr fieldname, CharPtr envname,
 										   CharPtr def) {
-		  CharPtr path = getenv(envname);
+		  CharPtr path = getenv(L, envname);
 		  if (path == null)  /* no environment variable? */
 			LuaPushString(L, def);  /* use default */
 		  else {

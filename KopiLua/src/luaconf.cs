@@ -1023,13 +1023,29 @@ namespace KopiLua
 			return String.Format("error #{0}", error); // todo: check how this works - mjf
 		}
 
-		public static CharPtr getenv(CharPtr envname)
+		public static CharPtr getenv(LuaState L, CharPtr envname)
 		{
 			// todo: fix this - mjf
 			//if (envname == "LUA_PATH)
 				//return "MyPath";
+            if (L.GetEnvHandler != null)
+            {
+                string value = L.GetEnvHandler(envname.ToString());
+                if (value != null)
+                {
+                    return new CharPtr(value);
+                }
+            }
 			return null;
 		}
+        public static CharPtr setenv(LuaState L, CharPtr envname, CharPtr envvalue)
+        {
+            if (L.SetEnvHandler != null)
+            {
+                L.SetEnvHandler(envname.ToString(), envvalue.ToString());
+            }
+            return envvalue;
+        }
 		
 		[CLSCompliantAttribute(false)]
 		public static int memcmp(CharPtr ptr1, CharPtr ptr2, uint size) { return memcmp(ptr1, ptr2, (int)size); }

@@ -48,5 +48,15 @@ namespace KopiLua
         public Stream StdOut;
         public Stream StdIn;
         public Stream StdErr;
+        // Returns the environment value for a given key.
+        public Func<string, string> GetEnvHandler;
+        // Sets the environment value for a given key.
+        public Action<string, string> SetEnvHandler;
+        // Returns the ticks value for the current time. Int indicates some flags.
+        public Func<int, long> GetTimeHandler;
+        // Called when the os.exit command is called.
+        public Action ExitHandler;
+        // Calld when os.execute is called.
+        public Func<string, int> ExecuteHandler;
 	}
 }

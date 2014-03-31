@@ -44,14 +44,22 @@ namespace KopiLua
 				LuaPushInteger (L, 1);
 				return 1;
 			}
-			CharPtr strCmdLine = "/C regenresx " + LuaLOptString(L, 1, null);
-			System.Diagnostics.Process proc = new System.Diagnostics.Process();
-			proc.EnableRaisingEvents=false;
-			proc.StartInfo.FileName = "CMD.exe";
-			proc.StartInfo.Arguments = strCmdLine.ToString();
-			proc.Start();
-			proc.WaitForExit();
-			LuaPushInteger(L, proc.ExitCode);
+
+            if (L.ExecuteHandler != null)
+            {
+                LuaPushInteger(L, L.ExecuteHandler(param.ToString()));
+            }
+            else
+            {
+                CharPtr strCmdLine = "/C regenresx " + LuaLOptString(L, 1, null);
+                System.Diagnostics.Process proc = new System.Diagnostics.Process();
+                proc.EnableRaisingEvents = false;
+                proc.StartInfo.FileName = "CMD.exe";
+                proc.StartInfo.Arguments = strCmdLine.ToString();
+                proc.Start();
+                proc.WaitForExit();
+                LuaPushInteger(L, proc.ExitCode);
+            }
 #endif
 			return 1;
 		}
@@ -59,19 +67,35 @@ namespace KopiLua
 
 		private static int OSRemove (LuaState L) {
 		  CharPtr filename = LuaLCheckString(L, 1);
+          string filestr = filename.ToString();
+          if (L.RootFolder.Length > 0)
+          {
+              NixPath path = new NixPath(filestr);
+              filestr = L.RootFolder + path.ToString();
+          }
 		  int result = 1;
-		  try {File.Delete(filename.ToString());} catch {result = 0;}
+		  try {File.Delete(filestr);} catch {result = 0;}
 		  return OSPushResult(L, result, filename);
 		}
 
 
 		private static int OSRename (LuaState L) {
 			CharPtr fromname = LuaLCheckString(L, 1);
-		  CharPtr toname = LuaLCheckString(L, 2);
+		    CharPtr toname = LuaLCheckString(L, 2);
+            string fromstr = fromname.ToString();
+            string tostr = toname.ToString();
+            if (L.RootFolder.Length > 0)
+            {
+                NixPath path = new NixPath(fromstr);
+                fromstr = L.RootFolder + path.ToString();
+
+                path = new NixPath(tostr);
+                tostr = L.RootFolder + path.ToString();
+            }
 		  int result;
 		  try
 		  {
-			  File.Move(fromname.ToString(), toname.ToString());
+              File.Move(fromstr, tostr);
 			  result = 0;
 		  }
 		  catch
@@ -86,6 +110,7 @@ namespace KopiLua
 #if XBOX
 			LuaLError(L, "os_tmpname not supported on Xbox360");
 #else
+            // TODO!
 		  LuaPushString(L, Path.GetTempFileName());
 #endif
 		  return 1;
@@ -93,10 +118,14 @@ namespace KopiLua
 
 
 		private static int OSGetEnv (LuaState L) {
-		  LuaPushString(L, getenv(LuaLCheckString(L, 1)));  /* if null push nil */
+		  LuaPushString(L, getenv(L, LuaLCheckString(L, 1)));  /* if null push nil */
 		  return 1;
 		}
 
+        private static int OSSetEnv(LuaState L) {
+            LuaPushString(L, setenv(L, LuaLCheckString(L, 1), LuaLCheckString(L, 2)));
+            return 1;
+        }
 
 		private static int OSClock (LuaState L) {
 		  long ticks = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
@@ -151,12 +180,26 @@ namespace KopiLua
 		private static int OSDate (LuaState L) {
 		  CharPtr s = LuaLOptString(L, 1, "%c");
 		  DateTime stm;
-		  if (s[0] == '!') {  /* UTC? */
-			stm = DateTime.UtcNow;
-			s.inc();  /* skip `!' */
-		  }
-		  else
-			  stm = DateTime.Now;
+          if (s[0] == '!')
+          {  /* UTC? */
+              if (L.GetTimeHandler != null)
+              {
+                  stm = new DateTime(L.GetTimeHandler(1));
+              }
+              else
+              {
+                  stm = DateTime.UtcNow;
+              }
+              s.inc();  /* skip `!' */
+          }
+          else if (L.GetTimeHandler != null)
+          {
+              stm = new DateTime(L.GetTimeHandler(0));
+          }
+          else 
+          {
+              stm = DateTime.Now;
+          }
 		  if (strcmp(s, "*t") == 0) {
 			LuaCreateTable(L, 0, 9);  /* 9 = number of fields */
 			SetField(L, "sec", stm.Second);
@@ -464,7 +507,14 @@ namespace KopiLua
 		private static int OSTime (LuaState L) {
 		  DateTime t;
 		  if (LuaIsNoneOrNil(L, 1))  /* called without args? */
-			t = DateTime.Now;  /* get current time */
+              if (L.GetTimeHandler != null)
+              {
+                  t = new DateTime(L.GetTimeHandler(0));
+              }
+              else
+              {
+                  t = DateTime.Now;  /* get current time */
+              }
 		  else {
 			LuaLCheckType(L, 1, LUA_TTABLE);
 			LuaSetTop(L, 1);  /* make sure table is at the top */
@@ -508,15 +558,22 @@ namespace KopiLua
 
 
 		private static int OSExit (LuaState L) {
+            if (L.ExitHandler != null)
+            {
+                L.ExitHandler();
+            }
+            else
+            {
 #if XBOX
 			LuaLError(L, "os_exit not supported on XBox360");
 #else
 #if SILVERLIGHT
             throw new SystemException();
 #else
-			Environment.Exit(EXIT_SUCCESS);
+                Environment.Exit(EXIT_SUCCESS);
 #endif
 #endif
+            }
 			return 0;
 		}
 
@@ -527,6 +584,9 @@ namespace KopiLua
 		  new LuaLReg("execute",   OSExecute),
 		  new LuaLReg("exit",      OSExit),
 		  new LuaLReg("getenv",    OSGetEnv),
+          // Given that we want to use this in a more systems-y way we'll need a way
+          // of setting environment variables.
+          new LuaLReg("setenv",    OSSetEnv),
 		  new LuaLReg("remove",    OSRemove),
 		  new LuaLReg("rename",    OSRename),
 		  new LuaLReg("setlocale", OSSetLocale),
