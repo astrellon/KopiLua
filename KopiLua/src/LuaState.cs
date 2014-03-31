@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 
 namespace KopiLua
 {
@@ -41,5 +42,11 @@ namespace KopiLua
 		public Lua.GCObject gclist;
 		public Lua.LuaLongJmp errorJmp;  /* current error recover point */
 		public ptrdiff_t errfunc;  /* current error handling function (stack index) */
+
+        // Modification
+        public string RootFolder;
+        public Stream StdOut;
+        public Stream StdIn;
+        public Stream StdErr;
 	}
 }

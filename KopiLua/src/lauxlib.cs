@@ -683,11 +683,11 @@ namespace KopiLua
 		  lf.extraline = 0;
 		  if (filename == null) {
 			LuaPushLiteral(L, "=stdin");
-			lf.f = stdin;
+			lf.f = L.StdIn;
 		  }
 		  else {
 			LuaPushFString(L, "@%s", filename);
-			lf.f = fopen(filename, "r");
+			lf.f = fopen(L, filename, "r");
 			if (lf.f == null) return ErrFile(L, "open", fnameindex);
 		  }
 		  c = getc(lf.f);
@@ -697,7 +697,7 @@ namespace KopiLua
 			if (c == '\n') c = getc(lf.f);
 		  }
 		  if (c == LUA_SIGNATURE[0] && (filename!=null)) {  /* binary file? */
-			lf.f = freopen(filename, "rb", lf.f);  /* reopen in binary mode */
+			lf.f = freopen(L, filename, "rb", lf.f);  /* reopen in binary mode */
 			if (lf.f == null) return ErrFile(L, "reopen", fnameindex);
 			/* skip eventual `#!...' */
 		   while ((c = getc(lf.f)) != EOF && c != LUA_SIGNATURE[0]) ;
@@ -758,7 +758,7 @@ namespace KopiLua
 
 		private static int Panic (LuaState L) {
 		  //(void)L;  /* to avoid warnings */
-		  fprintf(stderr, "PANIC: unprotected error in call to Lua API (%s)\n",
+		  fprintf(L.StdErr, "PANIC: unprotected error in call to Lua API (%s)\n",
 						   LuaToString(L, -1));
 		  return 0;
 		}

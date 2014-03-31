@@ -33,11 +33,11 @@ namespace KopiLua
 			if (s == null)
 			  return LuaLError(L, LUA_QL("tostring") + " must return a string to " +
 								   LUA_QL("print"));
-			if (i > 1) fputs("\t", stdout);
-			fputs(s, stdout);
+			if (i > 1) fputs("\t", L.StdOut);
+            fputs(s, L.StdOut);
 			LuaPop(L, 1);  /* pop result */
 		  }
-		  Console.Write("\n", stdout);
+		  Console.Write("\n", L.StdOut);
 		  return 0;
 		}
 

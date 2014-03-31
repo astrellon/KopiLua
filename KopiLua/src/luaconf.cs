@@ -295,9 +295,9 @@ namespace KopiLua
 #else
 		public static bool lua_readline(LuaState L, CharPtr b, CharPtr p)
 		{
-			fputs(p, stdout);
-			fflush(stdout);		/* show prompt */
-			return (fgets(b, stdin) != null);  /* get line */
+			fputs(p, L.StdOut);
+            fflush(L.StdOut);		/* show prompt */
+			return (fgets(b, L.StdIn) != null);  /* get line */
 		}
 		public static void lua_saveline(LuaState L, int idx)	{}
 		public static void lua_freeline(LuaState L, CharPtr b)	{}
@@ -1176,7 +1176,9 @@ namespace KopiLua
 
 		public static void fputs(CharPtr str, Stream stream)
 		{
-			Console.Write(str.ToString());
+            //Console.Write(str.ToString());
+            byte[] bytes = System.Text.Encoding.UTF8.GetBytes(str.ToString());
+            stream.Write(bytes, 0, bytes.Length);
 		}
 
 		public static int feof(Stream s)
@@ -1294,9 +1296,16 @@ namespace KopiLua
 			return str + index;
 		}
 
-		public static Stream fopen(CharPtr filename, CharPtr mode)
+		public static Stream fopen(LuaState L, CharPtr filename, CharPtr mode)
 		{
-			string str = filename.ToString();			
+			string str = filename.ToString();
+            // Unless a path is given, use default behaviour.
+            if (L.RootFolder.Length > 0)
+            {
+                NixPath path = new NixPath(str);
+                str = L.RootFolder + path.ToString();
+            }
+
 			FileMode filemode = FileMode.Open;
 			FileAccess fileaccess = (FileAccess)0;			
 			for (int i=0; mode[i] != '\0'; i++)
@@ -1323,7 +1332,7 @@ namespace KopiLua
 			}
 		}
 
-		public static Stream freopen(CharPtr filename, CharPtr mode, Stream stream)
+		public static Stream freopen(LuaState L, CharPtr filename, CharPtr mode, Stream stream)
 		{
 			try
 			{
@@ -1332,7 +1341,7 @@ namespace KopiLua
 			}
 			catch { }
 
-			return fopen(filename, mode);
+			return fopen(L, filename, mode);
 		}
 
 		public static void fflush(Stream stream)
@@ -1360,8 +1369,25 @@ namespace KopiLua
 
 		public static int fscanf(Stream f, CharPtr format, params object[] argp)
 		{
-			string str = Console.ReadLine();
-			return parse_scanf(str, format, argp);
+			//string str = Console.ReadLine();
+            CharPtr str = new CharPtr();
+            int index = 0;
+            try
+            {
+                while (true)
+                {
+                    str[index] = (char)f.ReadByte();
+                    if (str[index] == '\n')
+                        break;
+                    if (index >= str.chars.Length)
+                        break;
+                    index++;
+                }
+            }
+            catch
+            {
+            }
+			return parse_scanf(str.ToString(), format, argp);
 		}
 		
 		public static int fseek(Stream f, long offset, int origin)

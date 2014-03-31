@@ -353,8 +353,8 @@ namespace KopiLua
 		*/
 
 
-		private static int Readable (CharPtr filename) {
-		  Stream f = fopen(filename, "r");  /* try to open file */
+		private static int Readable (LuaState L, CharPtr filename) {
+		  Stream f = fopen(L, filename, "r");  /* try to open file */
 		  if (f == null) return 0;  /* open failed */
 		  fclose(f);
 		  return 1;
@@ -385,7 +385,7 @@ namespace KopiLua
 			CharPtr filename;
 			filename = LuaLGSub(L, LuaToString(L, -1), LUA_PATH_MARK, name);
 			LuaRemove(L, -2);  /* remove path template */
-			if (Readable(filename) != 0)  /* does file exist and is readable? */
+			if (Readable(L, filename) != 0)  /* does file exist and is readable? */
 			  return filename;  /* return that file name */
 			LuaPushFString(L, "\n\tno file " + LUA_QS, filename);
 			LuaRemove(L, -2);  /* remove file name */

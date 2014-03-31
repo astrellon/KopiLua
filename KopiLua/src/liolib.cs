@@ -164,7 +164,7 @@ namespace KopiLua
 		  CharPtr filename = LuaLCheckString(L, 1);
 		  CharPtr mode = LuaLOptString(L, 2, "r");
 		  FilePtr pf = NewFile(L);
-		  pf.file = fopen(filename, mode);
+		  pf.file = fopen(L, filename, mode);
 		  return (pf.file == null) ? PushResult(L, 0, filename) : 1;
 		}
 
@@ -208,7 +208,7 @@ namespace KopiLua
 			CharPtr filename = LuaToString(L, 1);
 			if (filename != null) {
 			  FilePtr pf = NewFile(L);
-			  pf.file = fopen(filename, mode);
+			  pf.file = fopen(L, filename, mode);
 			  if (pf.file == null)
 				FileError(L, 1, filename);
 			}
@@ -256,7 +256,7 @@ namespace KopiLua
 		  else {
 			CharPtr filename = LuaLCheckString(L, 1);
 			FilePtr pf = NewFile(L);
-			pf.file = fopen(filename, "r");
+			pf.file = fopen(L, filename, "r");
 			if (pf.file == null)
 			  FileError(L, 1, filename);
 			AuxLines(L, LuaGetTop(L), 1);
@@ -550,9 +550,9 @@ namespace KopiLua
 		  LuaLRegister(L, LUA_IOLIBNAME, iolib);
 		  /* create (and set) default files */
 		  NewFEnv(L, IoNoClose);  /* close function for default files */
-		  CreateStdFile(L, stdin, IOINPUT, "stdin");
-		  CreateStdFile(L, stdout, IOOUTPUT, "stdout");
-		  CreateStdFile(L, stderr, 0, "stderr");
+		  CreateStdFile(L, L.StdIn, IOINPUT, "stdin");
+		  CreateStdFile(L, L.StdOut, IOOUTPUT, "stdout");
+		  CreateStdFile(L, L.StdErr, 0, "stderr");
 		  LuaPop(L, 1);  /* pop environment for default files */
 		  LuaGetField(L, -1, "popen");
 		  NewFEnv(L, IoPClose);  /* create environment for 'popen' */

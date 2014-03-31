@@ -296,14 +296,14 @@ namespace KopiLua
 		private static int DBDebug (LuaState L) {
 		  for (;;) {
 			CharPtr buffer = new char[250];
-			fputs("lua_debug> ", stderr);
-			if (fgets(buffer, stdin) == null ||
+			fputs("lua_debug> ", L.StdErr);
+			if (fgets(buffer, L.StdIn) == null ||
 				strcmp(buffer, "cont\n") == 0)
 			  return 0;
 			if (LuaLLoadBuffer(L, buffer, (uint)strlen(buffer), "=(debug command)")!=0 ||
 				LuaPCall(L, 0, 0, 0)!=0) {
-			  fputs(LuaToString(L, -1), stderr);
-			  fputs("\n", stderr);
+			  fputs(LuaToString(L, -1), L.StdErr);
+			  fputs("\n", L.StdErr);
 			}
 			LuaSetTop(L, 0);  /* remove eventual returns */
 		  }

@@ -132,6 +132,7 @@
     <Compile Include="src\LuaState.cs" />
     <Compile Include="src\LuaDebug.cs" />
     <Compile Include="src\LuaTag.cs" />
+	<Compile Include="src\NixPath.cs" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
