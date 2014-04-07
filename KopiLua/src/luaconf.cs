@@ -1193,7 +1193,7 @@ namespace KopiLua
 		public static void fputs(CharPtr str, Stream stream)
 		{
 			//Console.Write(str.ToString());
-			byte[] bytes = System.Text.Encoding.UTF8.GetBytes(str.ToString());
+			byte[] bytes = System.Text.Encoding.UTF8.GetBytes(str.ToString() + "\n");
 			stream.Write(bytes, 0, bytes.Length);
 		}
 		
@@ -1325,7 +1325,7 @@ namespace KopiLua
 			// Unless a path is given, use default behaviour.
 			if (L.RootFolder.Length > 0)
 			{
-				NixPath path = new NixPath(str);
+                NixPath path = L.WorkingDirectory.Combine(str);
 				str = L.RootFolder + path.ToString();
 			}
 			

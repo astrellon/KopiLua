@@ -70,7 +70,7 @@ namespace KopiLua
           string filestr = filename.ToString();
           if (L.RootFolder.Length > 0)
           {
-              NixPath path = new NixPath(filestr);
+              NixPath path = L.WorkingDirectory.Combine(filestr);
               filestr = L.RootFolder + path.ToString();
           }
 		  int result = 1;
@@ -86,10 +86,10 @@ namespace KopiLua
             string tostr = toname.ToString();
             if (L.RootFolder.Length > 0)
             {
-                NixPath path = new NixPath(fromstr);
+                NixPath path = L.WorkingDirectory.Combine(fromstr);
                 fromstr = L.RootFolder + path.ToString();
 
-                path = new NixPath(tostr);
+                path = L.WorkingDirectory.Combine(tostr);
                 tostr = L.RootFolder + path.ToString();
             }
 		  int result;

@@ -48,6 +48,7 @@ namespace KopiLua
         public Stream StdOut;
         public Stream StdIn;
         public Stream StdErr;
+        public NixPath WorkingDirectory = new NixPath();
         // Returns the environment value for a given key.
         public Func<string, string> GetEnvHandler;
         // Sets the environment value for a given key.
