@@ -37,7 +37,7 @@ namespace KopiLua
             fputs(s, L.StdOut);
 			LuaPop(L, 1);  /* pop result */
 		  }
-		  Console.Write("\n", L.StdOut);
+          fputs("\n", L.StdOut);
 		  return 0;
 		}
 

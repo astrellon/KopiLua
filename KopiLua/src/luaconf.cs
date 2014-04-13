@@ -1193,7 +1193,7 @@ namespace KopiLua
 		public static void fputs(CharPtr str, Stream stream)
 		{
 			//Console.Write(str.ToString());
-			byte[] bytes = System.Text.Encoding.UTF8.GetBytes(str.ToString() + "\n");
+			byte[] bytes = System.Text.Encoding.UTF8.GetBytes(str.ToString());
 			stream.Write(bytes, 0, bytes.Length);
 		}
 		
