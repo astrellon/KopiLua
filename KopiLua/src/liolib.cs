@@ -187,7 +187,7 @@ namespace KopiLua
 #if XBOX
 			LuaLError(L, "io_tmpfile not supported on Xbox360");
 #else
-		  pf.file = tmpfile();
+		  pf.file = tmpfile(L);
 #endif
 		  return (pf.file == null) ? PushResult(L, 0, null) : 1;
 		}

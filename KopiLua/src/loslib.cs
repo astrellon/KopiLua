@@ -68,11 +68,11 @@ namespace KopiLua
 		private static int OSRemove (LuaState L) {
 		  CharPtr filename = LuaLCheckString(L, 1);
           string filestr = filename.ToString();
-          if (L.RootFolder.Length > 0)
-          {
-              NixPath path = L.WorkingDirectory.Combine(filestr);
-              filestr = L.RootFolder + path.ToString();
-          }
+            if (L.RemoveFileHandler != null)
+            {
+                return OSPushResult(L, L.RemoveFileHandler(filestr), filename);
+            }
+          
 		  int result = 1;
 		  try {File.Delete(filestr);} catch {result = 0;}
 		  return OSPushResult(L, result, filename);
@@ -84,13 +84,9 @@ namespace KopiLua
 		    CharPtr toname = LuaLCheckString(L, 2);
             string fromstr = fromname.ToString();
             string tostr = toname.ToString();
-            if (L.RootFolder.Length > 0)
+            if (L.RenameFileHandler != null)
             {
-                NixPath path = L.WorkingDirectory.Combine(fromstr);
-                fromstr = L.RootFolder + path.ToString();
-
-                path = L.WorkingDirectory.Combine(tostr);
-                tostr = L.RootFolder + path.ToString();
+                return OSPushResult(L, L.RenameFileHandler(fromstr, tostr), fromname);
             }
 		  int result;
 		  try
@@ -111,7 +107,14 @@ namespace KopiLua
 			LuaLError(L, "os_tmpname not supported on Xbox360");
 #else
             // TODO!
-		  LuaPushString(L, Path.GetTempFileName());
+            if (L.GetTempFilenameHandler != null)
+            {
+                LuaPushString(L, L.GetTempFilenameHandler());
+            }
+            else
+            {
+                LuaPushString(L, Path.GetTempFileName());
+            }
 #endif
 		  return 1;
 		}

@@ -1322,12 +1322,6 @@ namespace KopiLua
 		public static Stream fopen(LuaState L, CharPtr filename, CharPtr mode)
 		{
 			string str = filename.ToString();
-			// Unless a path is given, use default behaviour.
-			if (L.RootFolder.Length > 0)
-			{
-                NixPath path = L.WorkingDirectory.Combine(str);
-				str = L.RootFolder + path.ToString();
-			}
 			
 			FileMode filemode = FileMode.Open;
 			FileAccess fileaccess = (FileAccess)0;			
@@ -1347,6 +1341,10 @@ namespace KopiLua
 			}
 			try
 			{
+                if (L.OpenFileHandler != null)
+                {
+                    return L.OpenFileHandler(str, filemode, fileaccess);
+                }
 				return new FileStream(str, filemode, fileaccess);
 			}
 			catch
@@ -1384,9 +1382,23 @@ namespace KopiLua
 		}
 		
 		#if !XBOX
-		public static Stream tmpfile()
+		public static Stream tmpfile(LuaState L)
 		{
-			return new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.ReadWrite);
+            string path = null;
+            if (L.GetTempFilenameHandler != null)
+            {
+                path = L.GetTempFilenameHandler();
+            }
+            else
+            {
+                path = Path.GetTempFileName();
+            }
+
+            if (L.OpenFileHandler != null)
+            {
+                return L.OpenFileHandler(path, FileMode.Create, FileAccess.ReadWrite);
+            }
+			return new FileStream(path, FileMode.Create, FileAccess.ReadWrite);
 		}
 		#endif
 		

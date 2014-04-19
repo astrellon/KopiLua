@@ -44,11 +44,9 @@ namespace KopiLua
 		public ptrdiff_t errfunc;  /* current error handling function (stack index) */
 
         // Modification
-        public string RootFolder;
         public Stream StdOut;
         public Stream StdIn;
         public Stream StdErr;
-        public NixPath WorkingDirectory = new NixPath();
         // Returns the environment value for a given key.
         public Func<string, string> GetEnvHandler;
         // Sets the environment value for a given key.
@@ -59,5 +57,13 @@ namespace KopiLua
         public Action ExitHandler;
         // Calld when os.execute is called.
         public Func<string, int> ExecuteHandler;
+        // Called when io.open is called
+        public Func<string, FileMode, FileAccess, Stream> OpenFileHandler;
+        // Called when os.remove is called
+        public Func<string, int> RemoveFileHandler;
+        // Called when os.rename is called
+        public Func<string, string, int> RenameFileHandler;
+        // Called when needing a new temporary filename, used by io.tmpfile and os.tmpname.
+        public Func<string> GetTempFilenameHandler;
 	}
 }
