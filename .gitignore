@@ -30,6 +30,7 @@ UpgradeLog.XML
 UpgradeLog.htm
 *.ReSharper
 *.userprefs
+*.meta
 
 #Other files
 KopiLua.htm

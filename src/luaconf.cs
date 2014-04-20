@@ -297,7 +297,7 @@ namespace KopiLua
 		{
 			fputs(p, L.StdOut);
 			fflush(L.StdOut);		/* show prompt */
-			return (fgets(b, L.StdIn) != null);  /* get line */
+			return (fgets(L, b, L.StdIn) != null);  /* get line */
 		}
 		public static void lua_saveline(LuaState L, int idx)	{}
 		public static void lua_freeline(LuaState L, CharPtr b)	{}
@@ -583,7 +583,7 @@ namespace KopiLua
 		/*
 		@@ The luai_num* macros define the primitive operations over numbers.
 		*/
-		#if LUA_CORE
+		#if !LUA_CORE
 		//#include <math.h>
 		public delegate lua_Number op_delegate(lua_Number a, lua_Number b);
 		public static lua_Number luai_numadd(lua_Number a, lua_Number b) { return ((a) + (b)); }
@@ -1258,11 +1258,50 @@ namespace KopiLua
 					return 0;
 			}
 		}
-
-		public static CharPtr fgets(CharPtr str, Stream stream)
+		
+		public static Dictionary<Stream, StreamReader> Readers = new Dictionary<Stream, StreamReader>();
+		public static CharPtr fgets(LuaState L, CharPtr str, Stream stream)
 		{
+			/*int index = 0;
+			try
+			{
+				while (true)
+				{
+                    int value = stream.ReadByte();
+                    if (value < 0)
+                        break;
+
+                    str[index] = (char)value;
+					if (str[index] == '\n')
+						break;
+					if (index >= str.chars.Length)
+						break;
+					index++;
+				}
+			}
+			catch
+			{
+			}*/
+			
+			
+			//StreamReader reader = new StreamReader(stream);
+			/*
+            Write(L.StdOut, "\n[fgets]: EoS? " + reader.EndOfStream + "\n");    
+            if (reader.EndOfStream)
+            {
+                return null;
+            }*/
+			//Write(L.StdOut, "\nStarting readline\n");
+			//string result = reader.ReadLine();
+			//Write(L.StdOut, "\nCompleted readline\n");
+			/*for (int i = 0; i < result.Length; i++)
+            {
+                str[i] = result[i];
+            }
+            str[result.Length] = '\n';*/
+			/*
             int index = 0;
-            byte []bytes = new byte[32];
+            byte []bytes = new byte[4];
             bool done = false;
             while (!done)
             {
@@ -1285,6 +1324,20 @@ namespace KopiLua
                 }
             }
             return str;
+             */
+			
+			if (!Readers.ContainsKey(stream))
+			{
+				Readers[stream] = new StreamReader(stream);
+			}
+			UnityEngine.Debug.Log("Waiting to read line");
+			string line = Readers[stream].ReadLine() + "\n";
+			UnityEngine.Debug.Log("Read line: >" + line + "<");
+			for (int i = 0; i < line.Length; i++)
+			{
+				str[i] = line[i];
+			}
+			return str;
 		}
 		
 		public static double frexp(double x, out int expptr)
@@ -1322,6 +1375,13 @@ namespace KopiLua
 		public static Stream fopen(LuaState L, CharPtr filename, CharPtr mode)
 		{
 			string str = filename.ToString();
+			// Unless a path is given, use default behaviour.
+			if (L.RootFolder.Length > 0)
+			{
+				NixPath path = new NixPath(str);
+				str = L.RootFolder + path.ToString();
+			}
+			
 			FileMode filemode = FileMode.Open;
 			FileAccess fileaccess = (FileAccess)0;			
 			for (int i=0; mode[i] != '\0'; i++)
@@ -1329,6 +1389,8 @@ namespace KopiLua
 			{
 				case 'r': 
 				fileaccess = fileaccess | FileAccess.Read;
+				if (!File.Exists(str))
+					return null;
 				break;
 				
 				case 'w':
@@ -1338,12 +1400,6 @@ namespace KopiLua
 			}
 			try
 			{
-                if (L.OpenFileHandler != null)
-                {
-                    return L.OpenFileHandler(str, filemode, fileaccess);
-                }
-                if (!File.Exists(str))
-                    return null;
 				return new FileStream(str, filemode, fileaccess);
 			}
 			catch
@@ -1381,23 +1437,9 @@ namespace KopiLua
 		}
 		
 		#if !XBOX
-		public static Stream tmpfile(LuaState L)
+		public static Stream tmpfile()
 		{
-            string path = null;
-            if (L.GetTempFilenameHandler != null)
-            {
-                path = L.GetTempFilenameHandler();
-            }
-            else
-            {
-                path = Path.GetTempFileName();
-            }
-
-            if (L.OpenFileHandler != null)
-            {
-                return L.OpenFileHandler(path, FileMode.Create, FileAccess.ReadWrite);
-            }
-			return new FileStream(path, FileMode.Create, FileAccess.ReadWrite);
+			return new FileStream(Path.GetTempFileName(), FileMode.Create, FileAccess.ReadWrite);
 		}
 		#endif
 		
@@ -1422,11 +1464,9 @@ namespace KopiLua
             catch
             {
             }*/
-			//StreamReader reader = new StreamReader(f);
-			//string str = reader.ReadLine();
-            CharPtr str = new CharPtr();
-            fgets(str, f);
-			return parse_scanf(str.ToString(), format, argp);
+			StreamReader reader = new StreamReader(f);
+			string str = reader.ReadLine();
+			return parse_scanf(str, format, argp);
 		}
 		
 		public static int fseek(Stream f, long offset, int origin)
